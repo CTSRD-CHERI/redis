@@ -1907,13 +1907,17 @@ void dumpX86Calls(void *addr, size_t len) {
     if (len < 5) return;
     for (j = 0; j < len-4; j++) {
         if (p[j] != 0xE8) continue; /* Not an E8 CALL opcode. */
-        unsigned long target = (unsigned long)addr+j+5;
+        uintptr_t target = (uintptr_t)addr+j+5;
         uint32_t tmp;
         memcpy(&tmp, p+j+1, sizeof(tmp));
         target += tmp;
         if (dladdr((void*)target, &info) != 0 && info.dli_sname != NULL) {
             if (ht[target&0xff] != target) {
+#if defined(__CHERI_PURE_CAPABILITY__)
+                printf("Function at 0x%Pd is %s\n",target,info.dli_sname);
+#else
                 printf("Function at 0x%lx is %s\n",target,info.dli_sname);
+#endif
                 ht[target&0xff] = target;
             }
             j += 4; /* Skip the 32 bit immediate. */
