@@ -90,7 +90,12 @@ int clientsCronHandleTimeout(client *c, mstime_t now_ms) {
  * the tree. In beforeSleep() we call handleBlockedClientsTimeout() to run
  * the tree and unblock the clients. */
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+/* 8 bytes mstime + sizeof(void *) bytes client ID aligned to alignof(max_align_t). */
+#define CLIENT_ST_KEYLEN 32
+#else
 #define CLIENT_ST_KEYLEN 16    /* 8 bytes mstime + 8 bytes client ID. */
+#endif
 
 /* Given client ID and timeout, write the resulting radix tree key in buf. */
 void encodeTimeoutKey(unsigned char *buf, uint64_t timeout, client *c) {
@@ -116,7 +121,11 @@ void addClientToTimeoutTable(client *c) {
     uint64_t timeout = c->bpop.timeout;
     unsigned char buf[CLIENT_ST_KEYLEN];
     encodeTimeoutKey(buf,timeout,c);
+#if defined(__CHERI_PURE_CAPABILITY__)
+    if (raxTryInsert(server.clients_timeout_table,buf,sizeof(buf),c,NULL))
+#else
     if (raxTryInsert(server.clients_timeout_table,buf,sizeof(buf),NULL,NULL))
+#endif
         c->flags |= CLIENT_IN_TO_TABLE;
 }
 
@@ -144,6 +153,9 @@ void handleBlockedClientsTimeout(void) {
         uint64_t timeout;
         client *c;
         decodeTimeoutKey(ri.key,&timeout,&c);
+#if defined(__CHERI_PURE_CAPABILITY__)
+	c = (client *) ri.data;
+#endif
         if (timeout >= now) break; /* All the timeouts are in the future. */
         c->flags &= ~CLIENT_IN_TO_TABLE;
         checkBlockedClientTimeout(c,now);
