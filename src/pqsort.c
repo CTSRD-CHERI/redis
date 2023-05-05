@@ -41,6 +41,10 @@
 #include <stdint.h>
 #include <errno.h>
 #include <stdlib.h>
+#if defined(__CHERI_PURE_CAPABILITY__)
+#include <stdalign.h>
+#include <stddef.h>
+#endif
 
 static inline char	*med3 (char *, char *, char *,
     int (*)(const void *, const void *));
@@ -62,19 +66,44 @@ static inline void	 swapfunc (char *, char *, size_t, int);
         } while (--i > 0);				\
 }
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define SWAPINIT(a, es) 					\
+	if (!__builtin_is_aligned(a, alignof(max_align_t))) {   \
+		swaptype = 2;                           	\
+	} else if (es % sizeof(uintptr_t) != 0) { 		\
+		swaptype = 2;					\
+	} else {						\
+		if (es == sizeof(uintptr_t)) {			\
+			swaptype = 0;				\
+		} else {					\
+			swaptype = 1;				\
+		}						\
+	}
+#else
 #define SWAPINIT(a, es) swaptype = (uintptr_t)a % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+#endif
 
 static inline void
 swapfunc(char *a, char *b, size_t n, int swaptype)
 {
 
 	if (swaptype <= 1)
-		swapcode(long, a, b, n)
+		swapcode(uintptr_t, a, b, n)
 	else
 		swapcode(char, a, b, n)
 }
 
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define swap(a, b)							\
+	if (swaptype == 0) {						\
+		uintptr_t t = *(uintptr_t *)(void *)(a);		\
+		*(uintptr_t *)(void *)(a) = *(uintptr_t*)(void *)(b);	\
+		*(uintptr_t *)(void *)(b) = t;				\
+	} else								\
+		swapfunc(a, b, es, swaptype)
+
+#else
 #define swap(a, b)						\
 	if (swaptype == 0) {					\
 		long t = *(long *)(void *)(a);			\
@@ -82,6 +111,7 @@ swapfunc(char *a, char *b, size_t n, int swaptype)
 		*(long *)(void *)(b) = t;			\
 	} else							\
 		swapfunc(a, b, es, swaptype)
+#endif
 
 #define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
 
