@@ -162,7 +162,11 @@ void enableBcastTrackingForPrefix(client *c, char *prefix, size_t plen) {
         bs->clients = raxNew();
         raxInsert(PrefixTable,(unsigned char*)prefix,plen,bs,NULL);
     }
+#if defined(__CHERI_PURE_CAPABILITY__)
+    if (raxTryInsert(bs->clients,(unsigned char*)&c,sizeof(c),c,NULL)) {
+#else
     if (raxTryInsert(bs->clients,(unsigned char*)&c,sizeof(c),NULL,NULL)) {
+#endif
         if (c->client_tracking_prefixes == NULL)
             c->client_tracking_prefixes = raxNew();
         raxInsert(c->client_tracking_prefixes,
@@ -605,7 +609,11 @@ void trackingBroadcastInvalidationMessages(void) {
             raxSeek(&ri2,"^",NULL,0);
             while(raxNext(&ri2)) {
                 client *c;
+#if defined(__CHERI_PURE_CAPABILITY__)
+		c = (client *) ri2.data;
+#else
                 memcpy(&c,ri2.key,sizeof(c));
+#endif
                 if (c->flags & CLIENT_TRACKING_NOLOOP) {
                     /* This client may have certain keys excluded. */
                     sds adhoc = trackingBuildBroadcastReply(c,bs->keys);
