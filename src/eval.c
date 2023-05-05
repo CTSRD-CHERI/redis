@@ -803,7 +803,7 @@ int ldbStartSession(client *c) {
             serverLog(LL_WARNING,"Redis forked for debugging eval");
         } else {
             /* Parent */
-            listAddNodeTail(ldb.children,(void*)(unsigned long)cp);
+            listAddNodeTail(ldb.children,(void*)(uintptr_t)cp);
             freeClientAsync(c); /* Close the client in the parent side. */
             return 0;
         }
@@ -867,7 +867,7 @@ void ldbEndSession(client *c) {
  * forked debugging sessions, it is removed from the children list.
  * If the pid was found non-zero is returned. */
 int ldbRemoveChild(pid_t pid) {
-    listNode *ln = listSearchKey(ldb.children,(void*)(unsigned long)pid);
+    listNode *ln = listSearchKey(ldb.children,(void*)(uintptr_t)pid);
     if (ln) {
         listDelNode(ldb.children,ln);
         return 1;

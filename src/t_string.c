@@ -610,7 +610,7 @@ void incrDecrCommand(client *c, long long incr) {
         value >= LONG_MIN && value <= LONG_MAX)
     {
         new = o;
-        o->ptr = (void*)((long)value);
+        o->ptr = (void*)((intptr_t)value);
     } else {
         new = createStringObjectFromLongLongForValue(value);
         if (o) {

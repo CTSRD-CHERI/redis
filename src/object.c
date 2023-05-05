@@ -164,7 +164,7 @@ robj *createStringObjectFromLongLongWithOptions(long long value, int valueobj) {
         if (value >= LONG_MIN && value <= LONG_MAX) {
             o = createObject(OBJ_STRING, NULL);
             o->encoding = OBJ_ENCODING_INT;
-            o->ptr = (void*)((long)value);
+            o->ptr = (void*)((intptr_t)value);
         } else {
             o = createObject(OBJ_STRING,sdsfromlonglong(value));
         }
@@ -642,7 +642,7 @@ robj *tryObjectEncoding(robj *o) {
             if (o->encoding == OBJ_ENCODING_RAW) {
                 sdsfree(o->ptr);
                 o->encoding = OBJ_ENCODING_INT;
-                o->ptr = (void*) value;
+                o->ptr = (void*)(intptr_t) value;
                 return o;
             } else if (o->encoding == OBJ_ENCODING_EMBSTR) {
                 decrRefCount(o);

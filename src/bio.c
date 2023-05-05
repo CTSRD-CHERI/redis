@@ -123,7 +123,7 @@ void bioInit(void) {
      * function accepts in order to pass the job ID the thread is
      * responsible of. */
     for (j = 0; j < BIO_NUM_OPS; j++) {
-        void *arg = (void*)(unsigned long) j;
+        void *arg = (void*)(uintptr_t) j;
         if (pthread_create(&thread,&attr,bioProcessBackgroundJobs,arg) != 0) {
             serverLog(LL_WARNING,"Fatal: Can't initialize Background Jobs.");
             exit(1);

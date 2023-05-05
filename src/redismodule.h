@@ -1210,7 +1210,7 @@ REDISMODULE_API int (*RedisModule_LoadConfigs)(RedisModuleCtx *ctx) REDISMODULE_
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR_UNUSED;
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
     void *getapifuncptr = ((void**)ctx)[0];
-    RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
+    RedisModule_GetApi = (int (*)(const char *, void *)) (uintptr_t)getapifuncptr;
     REDISMODULE_GET_API(Alloc);
     REDISMODULE_GET_API(TryAlloc);
     REDISMODULE_GET_API(Calloc);

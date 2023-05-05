@@ -756,7 +756,7 @@ void moduleFreeContext(RedisModuleCtx *ctx) {
  * (only the main thread uses propagatePendingCommands) */
 void moduleCreateContext(RedisModuleCtx *out_ctx, RedisModule *module, int ctx_flags) {
     memset(out_ctx, 0 ,sizeof(RedisModuleCtx));
-    out_ctx->getapifuncptr = (void*)(unsigned long)&RM_GetApi;
+    out_ctx->getapifuncptr = (void*)(uintptr_t)&RM_GetApi;
     out_ctx->module = module;
     out_ctx->flags = ctx_flags;
     if (ctx_flags & REDISMODULE_CTX_TEMP_CLIENT)
@@ -10873,7 +10873,7 @@ int moduleRegisterApi(const char *funcname, void *funcptr) {
 }
 
 #define REGISTER_API(name) \
-    moduleRegisterApi("RedisModule_" #name, (void *)(unsigned long)RM_ ## name)
+    moduleRegisterApi("RedisModule_" #name, (void *)(uintptr_t)RM_ ## name)
 
 /* Global initialization at Redis startup. */
 void moduleRegisterCoreAPI(void);
@@ -11184,7 +11184,7 @@ int moduleLoad(const char *path, void **module_argv, int module_argc, int is_loa
         serverLog(LL_WARNING, "Module %s failed to load: %s", path, dlerror());
         return C_ERR;
     }
-    onload = (int (*)(void *, void **, int))(unsigned long) dlsym(handle,"RedisModule_OnLoad");
+    onload = (int (*)(void *, void **, int))(uintptr_t) dlsym(handle,"RedisModule_OnLoad");
     if (onload == NULL) {
         dlclose(handle);
         serverLog(LL_WARNING,
@@ -11280,7 +11280,7 @@ int moduleUnload(sds name) {
 
     /* Give module a chance to clean up. */
     int (*onunload)(void *);
-    onunload = (int (*)(void *))(unsigned long) dlsym(module->handle, "RedisModule_OnUnload");
+    onunload = (int (*)(void *))(uintptr_t) dlsym(module->handle, "RedisModule_OnUnload");
     if (onunload) {
         RedisModuleCtx ctx;
         moduleCreateContext(&ctx, module, REDISMODULE_CTX_TEMP_CLIENT);

@@ -1081,7 +1081,7 @@ void rewriteConfigAddLineNumberToOption(struct rewriteConfigState *state, sds op
         l = listCreate();
         dictAdd(state->option_to_line,sdsdup(option),l);
     }
-    listAddNodeTail(l,(void*)(long)linenum);
+    listAddNodeTail(l,(void*)(uintptr_t)linenum);
 }
 
 /* Add the specified option to the set of processed options.
